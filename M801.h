@@ -21,7 +21,7 @@ public:
 	int nAQCFConverterModel_EquOver2;
 	int nAQCFConverterModel_State;
 
-	double**	pAQCFConverterModel_Yeqx;
+	double**	pAQCFConverterModel_Yeqx; //??*?????
 	double**	pAQCFConverterModel_Neqx;
 	double**	pAQCFConverterModel_Meq;
 

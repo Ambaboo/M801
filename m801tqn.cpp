@@ -302,8 +302,8 @@ BOOL M801::TQN_TimeDomainModelTimeStep()
 	// ----- update converter time reference (every second) 
 	// ----- and the converter relative time
 
-	dConverterTimeRef		= int(pNetSolver->run_time) * 1.0;
-	dConverterRelativeTime	= pNetSolver->run_time - dConverterTimeRef;
+	dConverterTimeRef		= int(pNetSolver->run_time) * 1.0;	//force dConverterTimeRef to every nearby integer
+	dConverterRelativeTime	= pNetSolver->run_time - dConverterTimeRef;	//relative time to nearby integer time. For example, dConverterRelativeTime = 1.72 - 1. 0 < dConverterRelativeTime < 1
 	dAcutalRunTime			= pNetSolver->run_time;
 
 	// ----- update information from DSP
@@ -585,6 +585,7 @@ BOOL M801::TQN_UpdateConverterRunTimeRef()
 BOOL M801::TQN_ComputeModelPointers()
 {
 	//------define valve pointers
+	//iValvePointer????valve????????6?valve
 
 	iValvePointer[0][0] =  0;
 	iValvePointer[1][0] =  3;
@@ -661,7 +662,7 @@ BOOL M801::TQN_ComputeModelPointers()
 
 	//------define ON/OFF state sequence for each valve
 	//------iValveStatusPerMode[i][j]=k; i: ith valve; j: jth mode; k: ON (1) or OFF (0)
-
+	//iValveStatusPerMode????mode???valve?????
 	//------Mode 0
 	iValveStatusPerMode[0][0]	= 1;
 	iValveStatusPerMode[1][0]	= 0;
@@ -770,6 +771,7 @@ BOOL M801::TQN_ComputeModelPointers()
 
 }
 //-------------------------------------------------------------------
+//???????????mode????AQCF model???valveON?valveOFF?Cap?????
 BOOL M801::TQN_PrepareAQCFConverterModel()
 {
 	int iMode, nMode, iValve;
@@ -858,7 +860,7 @@ BOOL M801::TQN_PrepareAQCFConverterModel()
 		}
 
 		// ---- Adjust Meq
-
+		//????5?????va, vb, vc, vp, vn??5?states
 		vConverterAQCFModel[iMode]->pAQCFConverterModel_Meq[0][0] = 1.0;
 		vConverterAQCFModel[iMode]->pAQCFConverterModel_Meq[1][1] = 1.0;
 		vConverterAQCFModel[iMode]->pAQCFConverterModel_Meq[2][2] = 1.0;
@@ -875,6 +877,7 @@ BOOL M801::TQN_PrepareAQCFConverterModel()
 	return true;
 }
 //-------------------------------------------------------------------
+//?????????????????yeq_real_tq, dNeq_real_tq, dMeq_real_tq
 BOOL M801::TQN_CopyAQCFModeltoObject(int iMode)
 {
 	int i, j;
@@ -1137,7 +1140,7 @@ BOOL M801::TQN_SingleCapacitorModel()
 //----------------------------------------------------------------------------
 //
 //		This routine is to calculate firing angle for next step
-//		firing angle = firing angle of present time +deviation of firing angle
+//		firing angle = firing angle of present time + deviation of firing angle
 //		the deviation can be calcuated from deviation between measured power 
 //		and prosected output power.
 //		the process of firing angle calculation is for retifier.
