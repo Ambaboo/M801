@@ -322,7 +322,7 @@ BOOL M801::TQN_TimeDomainModelTimeStep()
 		{
 			dx0 += yeq_real_tq[i][j] * xa_real_tq[j];
 		} 
-		xi_real_tq[i] = dx0;
+		xi_real_tq[i] = dx0; //THROUGH VARIABLES
 	}
 
 	//------perform diagnostic loop
@@ -369,7 +369,7 @@ BOOL M801::TQN_TimeDomainModelTimeStep()
 					// Update past history
 
 					if (!TQN_UpdatePastHistory()) return false;
-
+					 
 					if ( dConverterRelativeTime>dValveTurnONTimes[iNextTurnONValve] )
 					{
 						// ---- Update Valve ScheduleTime
@@ -442,7 +442,7 @@ BOOL M801::TQN_TimeDomainModelTimeStep()
 	{
 		// ----- Converter is NOT ON
 		// ----- Check Logic Start Time
-
+		//dLogicStartTime = 0.1
 		if ( dLogicStartTime < dAcutalRunTime ) 
 		{
 			if ( bLogicStart )
@@ -517,9 +517,10 @@ BOOL M801::TQN_TimeDomainModelTimeStep()
 				// Step 2: Set the valve turn on times
 
 				dTimePeriod = 1 / dFrequency;
-				dTimeDelay	=( dFiringAngle / TWODPI ) * dTimePeriod;
-				dx0 = dVacZeroTime - dConverterTimeRef + dTimeDelay;
-				dx1 = dTimePeriod / 6.0;
+				//TWODPI = 2*pi = 6.28318530717958647692528676655901
+				dTimeDelay	=( dFiringAngle / TWODPI ) * dTimePeriod; //alpha
+				dx0 = dVacZeroTime - dConverterTimeRef + dTimeDelay; //alpha+60
+				dx1 = dTimePeriod / 6.0; //???cycle??60??6?
 
 				for ( iValve=0 ; iValve<nValves ; iValve++ )
 				{
@@ -537,6 +538,7 @@ BOOL M801::TQN_TimeDomainModelTimeStep()
 		}
 		else
 		{
+			//??????run_time???dLogicStartTime
 			// Logic has not started
 			// ---- Update past history
 
@@ -2301,6 +2303,7 @@ BOOL M801::TQN_CreateConverterSCAQCFModel()
 //-------------------------------------------------------------------
 BOOL M801::TQN_UpdatePastHistory()
 {
+	//update beq_real_tq
 	int	i, j;
 
 	//------initialize array beq_real_tq
