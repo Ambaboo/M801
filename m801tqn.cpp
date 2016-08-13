@@ -640,6 +640,18 @@ BOOL M801::TQN_TimeDomainModelTimeStep()
 	double dActualRunTime;
 	double valveOnTime;
 
+	ofstream outfile44("Jingfan.txt", ios_base::out | ios_base::trunc);
+	outfile44 << " yeq_real_tq " << endl;
+	for (i = 0; i<devsta_tq; i++)
+	{
+	for (j = 0; j<devsta_tq; j++)
+	{
+	if (yeq_real_tq[i][j] != 0.0) outfile44 << i << "  " << j << "  " << yeq_real_tq[i][j] << endl;
+	}
+	}
+	outfile44 << endl;
+
+
 	// ----- update converter time reference (every second) 
 	// ----- and the converter relative time
 
