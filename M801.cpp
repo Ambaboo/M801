@@ -9,6 +9,7 @@
 #include "\wmaster\util\VicDraw.h"
 #include "\wmaster\solver\solvutil.h"
 #include "\wmaster\dfe\xdialog.h"
+#include "\wmaster\apps\scaqcf\PowerDeviceT.h"
 #include "M801.h"
 //-------------------------------------------------------------------
 #ifdef _DEBUG
@@ -78,7 +79,7 @@ static char THIS_FILE[] = __FILE__;
 //	dev_oparm[11]	: logic start time
 //	dev_oparm[12]	: converter start time
 
-//  M117 OLD
+//  M801 OLD
 
 //	dev_parm[ 0]	: thyristor 'on' conductance, g_on(Mhos)
 //	dev_parm[ 1]    : thyristor 'off' conductance, g_off(micMhos)
@@ -155,6 +156,11 @@ M801::M801(void* pDoc)
 	dev_nurid	= GetUniqueNurid(pDoc);
 //	dev_fname = GetUniqueFname(pDocument);
 
+	pPowerDeviceT = new CPowerDeviceT(this);
+	pTDSCAQCFModel_ValveON = new CPowerDeviceT(this);
+	pTDSCAQCFModel_ValveOFF = new CPowerDeviceT(this);
+	pTDSCAQCFModel_Cap = new CPowerDeviceT(this);
+
 	//--------other initialization
 
 	NullDataModel_801();
@@ -165,8 +171,8 @@ M801::M801(void* pDoc)
 	nValTerm_tq		= 10;
 	nCapTerm_tq		= 4;
 	iViconType		= 2;
-	nConverterEqu	= 54;
-	nConverterState = 54;
+	nConverterEqu	= 40; //4*3+2+2+4=20, 20*2 = 40
+	nConverterState = 40;
 	
 	/*
 	nValves = 6;
@@ -250,13 +256,6 @@ BOOL M801::NullDataModel_801()
 
 	iValveStatusPerMode		= NULL;
 	iValvePresentTimeStatus	= NULL;
-
-	Init_SCQDM_ValveON();
-	Init_SCQDM_ValveOFF();
-	Init_SCQDM_CAP();
-	Init_SCAQCF_ValveON();
-	Init_SCAQCF_ValveOFF();
-	Init_SCAQCF_CAP();
 
 	return true;
 }
@@ -380,19 +379,22 @@ BOOL M801::DeleteDataModel_801()
 	if(iValveStatusPerMode)			DeleteMatrix(iValveStatusPerMode);
 	if(iValvePresentTimeStatus)		DeleteVector(iValvePresentTimeStatus);
 
-	Clear_SCQDM_ValveON();	
-	Clear_SCQDM_ValveOFF();	
-	Clear_SCQDM_CAP();
-	Clear_SCAQCF_ValveON();	
-	Clear_SCAQCF_ValveOFF();
-	Clear_SCAQCF_CAP();
 
-	vector<M801ConverterAQCF*>::iterator it;
-	for (it = vConverterAQCFModel.begin(); it != vConverterAQCFModel.end(); it++)
+	vector<CPowerDevice_M801*>::iterator it;
+	for (it = pTDSCAQCFModel_M801.begin(); it != pTDSCAQCFModel_M801.end(); it++)
 	{
 		delete (*it);
 	}
-	vConverterAQCFModel.clear();
+	pTDSCAQCFModel_M801.clear();
+
+//	pTDSCAQCFModel_ValveON->TQN_ClearSCAQCF();
+//	pTDSCAQCFModel_ValveOFF->TQN_ClearSCAQCF();
+//	pTDSCAQCFModel_Cap->TQN_ClearSCAQCF();
+
+	if (pTDSCAQCFModel_ValveON)		delete pTDSCAQCFModel_ValveON;
+	if (pTDSCAQCFModel_ValveOFF)		delete pTDSCAQCFModel_ValveOFF;
+	if (pTDSCAQCFModel_Cap)			delete pTDSCAQCFModel_Cap;
+
 	
 	return true;
 
@@ -473,14 +475,14 @@ void M801::SetDefaultValues()
 	if (dev_parm) delete[]	dev_parm;
 	dev_parm = new CString[nd_parm];
 
-	dev_parm[0] = "100.0";
-	dev_parm[1] = "0.1";
-	dev_parm[2] = "20.0";
-	dev_parm[3] = "0.1";
-	dev_parm[4] = "100.0";
-	dev_parm[5] = "100.0";
-	dev_parm[6] = "3.0";
-	dev_parm[7] = "500.0";
+	dev_parm[0] = "1000.0";
+	dev_parm[1] = "0.01";
+	dev_parm[2] = "200.0";
+	dev_parm[3] = "0.38";
+	dev_parm[4] = "10.0";
+	dev_parm[5] = "0.0001";
+	dev_parm[6] = "5.0";
+	dev_parm[7] = "50.0";
 	dev_parm[8] = "13.8";
 	dev_parm[9] = "0.5";
 	dev_parm[10] = " ";
@@ -718,7 +720,7 @@ void M801_SelectDevice(CxDialog* dlg,void* p)
 		part=pUserDevices801 [i];
 		if( part->dev_nurid == pThis->MeasureDeviceIDM801  )
 		{
-			dlg->pButton[5]->caption = part->dev_title;
+			dlg->pButton[0]->caption = part->dev_title;
 		}
 	}
 }
@@ -777,6 +779,9 @@ static int rb_pf_ctrl[] = {5,6,7,-1};
 #define EB_THYRISTOR_ON 9
 #define EB_TITLE 0
 #define EB_ZERO_XING 8
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
